@@ -848,7 +848,7 @@ class PyCrown:
 
         print('Attach LiDAR points to corresponding crowns')
         lidar_in_crowns = gpd.sjoin(lidar_geodf, crown_geodf,
-                                    op='within', how="inner")
+                                    predicate='within', how="inner")
 
         lidar_tree_class = np.zeros(lidar_in_crowns['index_right'].size)
         lidar_tree_mask = np.zeros(lidar_in_crowns['index_right'].size,
