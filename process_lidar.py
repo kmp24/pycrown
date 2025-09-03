@@ -100,6 +100,10 @@ dsm_xds = dsm_xds.rio.reproject_match(dsm_xds)
 
 print(f'CHM res {chm_xds.rio.resolution()}, DEM res {dem_xds.rio.resolution()}, DSM res {dsm_xds.rio.resolution()}')
 
+dem_xds.rio.to_raster(dem_outname)
+dsm_xds.rio.to_raster(dsm_outname)
+chm_xds.rio.to_raster(chm_outname)
+
 end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"LiDAR pre-processing time: {elapsed_time:.4f} seconds")

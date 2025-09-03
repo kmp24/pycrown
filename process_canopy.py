@@ -10,9 +10,9 @@ start_time = time.time()
 
 infile = INFILE
 
-F_CHM = infile.split("\\")[-1].replace('.las','_chm.tif') #dsm-dem
-F_DTM = infile.split("\\")[-1].replace('.las','_dem.tif') #(DEM)
-F_DSM = infile.split("\\")[-1].replace('.las','_dsm.tif')
+F_CHM = infile.split("\\")[-1].replace('.las','_chm_output.tif') #dsm-dem
+F_DTM = infile.split("\\")[-1].replace('.las','_dem_output.tif') #(DEM)
+F_DSM = infile.split("\\")[-1].replace('.las','_dsm_output.tif')
 F_LAS = infile
 
 PC = PyCrown(F_CHM, F_DTM, F_DSM, F_LAS, outpath=infile.split("\\")[-1].replace('.las',''))

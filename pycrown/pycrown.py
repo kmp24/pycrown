@@ -41,7 +41,8 @@ try:
     from pycrown import _crown_dalponte_cython
 except ImportError:
     print("WARNING: Cython module not compiled. 'crown_dalponte_cython' not available")
-from pycrown import _crown_dalponte_numba
+#from pycrown import _crown_dalponte_numba
+from . import _crown_dalponte_numba
 from pycrown import _crown_dalponteCIRC_numba
 
 gdal.UseExceptions()
