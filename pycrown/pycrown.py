@@ -21,12 +21,12 @@ import scipy.ndimage as ndimage
 import scipy.ndimage.filters as filters
 from scipy.spatial.distance import cdist
 
-from skimage.morphology import watershed
+from skimage.segmentation import watershed
 from skimage.filters import threshold_otsu
 # from skimage.feature import peak_local_max
 
-import gdal
-import osr
+from osgeo import gdal
+from osgeo import osr
 
 from shapely.geometry import mapping, Point, Polygon
 
@@ -187,14 +187,13 @@ class PyCrown:
         fname :   str
                   Path to LiDAR dataset (.las or .laz-file)
         """
-        las = laspy.file.File(str(fname), mode='r')
+        las = laspy.read(str(fname))
         lidar_points = np.array((
             las.x, las.y, las.z, las.intensity, las.return_num,
             las.classification
         )).transpose()
         colnames = ['x', 'y', 'z', 'intensity', 'return_num', 'classification']
         self.las = pd.DataFrame(lidar_points, columns=colnames)
-        las.close()
 
     def _check_empty(self):
         """ Helper function raising an Exception if no trees present
@@ -548,7 +547,7 @@ class PyCrown:
         else:
             df = pd.DataFrame(np.array([trees, trees], dtype='object').T,
                               dtype='object', columns=['top_cor', 'top'])
-            self.trees = self.trees.append(df)
+            self.trees = pd.concat([self.trees, df], ignore_index=True)
 
         self._check_empty()
 
@@ -580,8 +579,8 @@ class PyCrown:
         timeit = 'Tree crowns delineation: {:.3f}s'
 
         # get the tree seeds (starting points for crown delineation)
-        seeds = self._tree_colrow(loc, self.resolution)
-        inraster = kwargs.get('inraster')
+        seeds = self._tree_colrow(loc, self.resolution)#.astype(np.int32)
+        inraster = kwargs.get('inraster')#.astype(np.float64)
 
         if not isinstance(inraster, np.ndarray):
             inraster = self.chm
@@ -802,6 +801,22 @@ class PyCrown:
             polys.append(Polygon(edges))
         self.trees.crown_poly_raster = polys
 
+    def crowns_to_polys_rasterx(self):
+        polys = []
+        trees_with_crowns = []
+        
+        for feature in rioshapes(self.crowns, mask=self.crowns.astype(bool)):
+            edges = feature[0]['coordinates'][0].copy()
+            for k in range(len(edges)):
+                edges[k] = self._to_lonlat(*edges[k], self.resolution)
+            
+            polys.append(Polygon(edges))
+            
+            tree_idx = self.trees[(self.trees.x == i) ].index[0]
+            trees_with_crowns.append(tree_idx)
+
+        self.trees = self.trees.loc[trees_with_crowns]
+        self.trees['crown_poly_raster'] = polys
     def crowns_to_polys_smooth(self, store_las=True, thin_perc=None,
                                first_return=True):
         """ Smooth crown polygons using Dalponte & Coomes (2016) approach:
@@ -862,10 +877,12 @@ class PyCrown:
             points = lidar_in_crowns[bool_indices]
             # check that not all values are the same
             if len(points.z) > 1 and not np.allclose(points.z,
-                                                     points.iloc[0].z):
-                points = points[points.z >= threshold_otsu(points.z)]
+                                         points.iloc[0].z):
+                threshold = threshold_otsu(points.z.values)
+                points = points[points.z >= threshold]
                 if first_return:
-                    points = points[points.return_num == 1]  # first returns
+                    points = points[points.return_num == 1]
+
             hull = points.unary_union.convex_hull
             polys.append(hull)
             lidar_tree_mask[bool_indices] = \
@@ -890,7 +907,6 @@ class PyCrown:
             outfile.y = lidar_in_crowns.y
             outfile.z = lidar_in_crowns.z
             outfile.intensity = lidar_tree_class
-            outfile.close()
 
         self.lidar_in_crowns = lidar_in_crowns
 
