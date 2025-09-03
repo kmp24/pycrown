@@ -1,2 +1,0 @@
-INFILE = r'2019.las'
-EPSG = "EPSG:5070"
