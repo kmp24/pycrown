@@ -100,9 +100,9 @@ dsm_xds = dsm_xds.rio.reproject_match(dsm_xds)
 
 print(f'CHM res {chm_xds.rio.resolution()}, DEM res {dem_xds.rio.resolution()}, DSM res {dsm_xds.rio.resolution()}')
 
-dem_xds.rio.to_raster(dem_outname)
-dsm_xds.rio.to_raster(dsm_outname)
-chm_xds.rio.to_raster(chm_outname)
+dem_xds.rio.to_raster(dem_outname.replace(".tif","_output.tif"))
+dsm_xds.rio.to_raster(dsm_outname.replace(".tif","_output.tif"))
+chm_xds.rio.to_raster(chm_outname.replace(".tif","_output.tif"))
 
 end_time = time.time()
 elapsed_time = end_time - start_time
